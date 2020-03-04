@@ -19,7 +19,7 @@ data LblLoco = LblLoco {
 write_opcode writer op = hPutChar writer (chr op)
     
 -- Parse and write
-parse_ln tokens writer
+parseLn tokens writer
     | (head tokens) == "i_load" = do
         write_opcode writer 0x20
         
@@ -33,14 +33,10 @@ parse_ln tokens writer
     | otherwise = write_opcode writer 0x00
     
 -- Pass 3 reading function
-read_file3 reader writer = do
-    iseof <- hIsEOF reader
-    if iseof
-        then return ()
-        else do
-            ln <- hGetLine reader
-            parse_ln (words ln) writer
-            read_file3 reader writer
+asmFile [] writer = hClose writer
+asmFile (x:xs) writer = do
+    parseLn (words x) writer
+    asmFile xs writer
             
 -- Pass 2
 -- In this pass, we check labels and other label references
@@ -105,17 +101,11 @@ main = do
     
     -- Pass 1 (cache the labels)
     let lbl_loco = loadLabels contents [] 0
-    putStrLn $ ("Labels: ") ++ (show lbl_loco)
     
     -- Pass 2 (update references)
     let lbl_refs = loadRefs contents lbl_loco []
-    putStrLn $ ("Refs: ") ++ (show lbl_refs)
 
     -- Pass 3
     writer <- openBinaryFile "first.bin" WriteMode
-
-    reader <- openFile "first.asm" ReadMode
-    read_file3 reader writer
+    asmFile contents writer
     
-    hClose reader
-    hClose writer
