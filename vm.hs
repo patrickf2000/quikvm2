@@ -26,8 +26,13 @@ decoder instr stack
     
     -- i_add
     | (chr 0x24) == (opcode instr) = do
-        putStrLn "i_add"
-        return stack
+        let n1 = read (head stack) :: Int
+        let stack2 = tail stack
+        let n2 = read (head stack2) :: Int
+        let stack3 = tail stack2
+        let answer = n1 + n2
+        let stack_f = (show answer) : stack3
+        return stack_f
     
     -- i_print
     | (chr 0x29) == (opcode instr) = do
@@ -40,9 +45,7 @@ decoder instr stack
         return stack
     
     -- exit
-    | (chr 0x10) == (opcode instr) = do
-        putStrLn "exit"
-        return stack
+    | (chr 0x10) == (opcode instr) = return stack
     
     -- lbl
     | (chr 0x11) == (opcode instr) = do
