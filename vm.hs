@@ -10,6 +10,61 @@ import qualified Data.Binary.Get as B
 import Data.Int
 import Data.Binary as B
 
+-- Represents an instruction
+data Instr = Instr {
+      opcode    :: Char
+    , iArg      :: Int32
+    } deriving (Show)
+    
+-- Decodes an individual instruction
+decoder instr stack
+    -- i_load
+    | (chr 0x20) == (opcode instr) = do
+        let i = iArg instr
+        let s2 = (show i) : stack
+        return s2
+    
+    -- i_add
+    | (chr 0x24) == (opcode instr) = do
+        putStrLn "i_add"
+        return stack
+    
+    -- i_print
+    | (chr 0x29) == (opcode instr) = do
+        putStrLn (head stack)
+        return stack
+    
+    -- i_pop
+    | (chr 0x31) == (opcode instr) = do
+        putStrLn "i_pop"
+        return stack
+    
+    -- exit
+    | (chr 0x10) == (opcode instr) = do
+        putStrLn "exit"
+        return stack
+    
+    -- lbl
+    | (chr 0x11) == (opcode instr) = do
+        putStrLn "lbl"
+        return stack
+    
+    -- jmp
+    | (chr 0xA3) == (opcode instr) = do
+        putStrLn "jmp"
+        return stack
+    
+    | otherwise = return stack
+    
+-- The main execution function
+execute contents stack pc = do
+    if pc == (length contents)
+        then return ()
+        else do
+            let instr = contents !! pc
+            stack2 <- decoder instr stack
+            execute contents stack2 (pc + 1)
+
 -- Reads an integer from the file
 readInt reader = do
     b1 <- hGetChar reader
@@ -21,69 +76,86 @@ readInt reader = do
     let no = B.decode no_str_l :: Int32
     return ()
     return no
-
--- The main decoder
-decoder op reader stack
+    
+-- Builds an instruction
+buildInstr op reader contents
     -- i_load
     | (chr 0x20) == op = do
         no <- readInt reader
-        let s2 = no : stack
-        return s2
+        let instr = Instr {
+            opcode = op,
+            iArg = no
+        }
+        let c2 = instr : contents
+        return c2
         
     -- i_add
     | (chr 0x24) == op = do
-        let no1 = head stack
-        let stack2 = tail stack
-        let no2 = head stack2
-        let stack3 = tail stack2
-        
-        let answer = no1 + no2
-        return (answer : stack3)
+        let instr = Instr {
+            opcode = op,
+            iArg = 0
+        }
+        let c2 = instr : contents
+        return c2
         
     -- i_print
     | (chr 0x29) == op = do
-        let no = head stack
-        putStrLn (show no)
-        return stack
+        let instr = Instr {
+            opcode = op,
+            iArg = 0
+        }
+        let c2 = instr : contents
+        return c2
         
     -- i_pop
     | (chr 0x31) == op = do
-        putStrLn "i_pop"
-        return stack
+        let instr = Instr {
+            opcode = op,
+            iArg = 0
+        }
+        let c2 = instr : contents
+        return c2
         
     -- exit
-    | (chr 0x10) == op = return stack
+    | (chr 0x10) == op = return contents
     
     -- lbl
     | (chr 0x11) == op = do
         no <- readInt reader
-        putStrLn $ "lbl " ++ (show no)
-        return stack
+        let instr = Instr {
+            opcode = op,
+            iArg = no
+        }
+        let c2 = instr : contents
+        return c2
     
     -- jmp
     | (chr 0xA3) == op = do
         no <- readInt reader
-        putStrLn $ "jmp " ++ (show no)
-        return stack
+        let instr = Instr {
+            opcode = op,
+            iArg = no
+        }
+        let c2 = instr : contents
+        return c2
         
     -- unknown instruction
-    | otherwise = do
-        putStrLn "idk"
-        return stack
-
+    | otherwise = return contents
+    
 -- Load and execute the file
-execute reader stack = do
+loadFile reader contents = do
     iseof <- hIsEOF reader
     if iseof
-        then return()
+        then return (reverse contents)
         else do
             op <- hGetChar reader
-            s2 <- decoder op reader stack
-            execute reader s2
+            s2 <- buildInstr op reader contents
+            loadFile reader s2
 
 -- The main function
 main = do
     reader <- openBinaryFile "first.bin" ReadMode
-    execute reader []
+    contents <- loadFile reader []
+    execute contents [] 0
     hClose reader
     
