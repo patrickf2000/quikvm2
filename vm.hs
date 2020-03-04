@@ -46,8 +46,25 @@ decoder op reader stack
         putStrLn (show no)
         return stack
         
+    -- i_pop
+    | (chr 0x31) == op = do
+        putStrLn "i_pop"
+        return stack
+        
     -- exit
     | (chr 0x10) == op = return stack
+    
+    -- lbl
+    | (chr 0x11) == op = do
+        no <- readInt reader
+        putStrLn $ "lbl " ++ (show no)
+        return stack
+    
+    -- jmp
+    | (chr 0xA3) == op = do
+        no <- readInt reader
+        putStrLn $ "jmp " ++ (show no)
+        return stack
         
     -- unknown instruction
     | otherwise = do

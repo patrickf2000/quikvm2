@@ -32,7 +32,14 @@ parseLn tokens writer
         writeInt writer (last tokens)
     | (head tokens) == "i_add" = write_opcode writer 0x24
     | (head tokens) == "i_print" = write_opcode writer 0x29
+    | (head tokens) == "i_pop" = write_opcode writer 0x31
     | (head tokens) == "exit" = write_opcode writer 0x10
+    | (head tokens) == "lbl" = do
+        write_opcode writer 0x11
+        writeInt writer (last tokens)
+    | (head tokens) == "jmp" = do
+        write_opcode writer 0xA3
+        writeInt writer (last tokens)
     | otherwise = write_opcode writer 0x00
     
 -- Pass 3 reading function
@@ -113,5 +120,5 @@ main = do
 
     -- Pass 3
     writer <- openBinaryFile "first.bin" WriteMode
-    asmFile contents writer
+    asmFile contents2 writer
     
