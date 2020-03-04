@@ -93,7 +93,10 @@ loadFile reader contents = do
         then return (reverse contents)
         else do
             ln <- hGetLine reader
-            loadFile reader (ln : contents)
+            let len = length ln
+            if len == 0
+                then loadFile reader contents
+                else loadFile reader (ln : contents)
 
 -- The main function
 main = do
@@ -106,7 +109,7 @@ main = do
     let lbl_loco = loadLabels contents [] 0
     
     -- Pass 2 (update references)
-    let lbl_refs = loadRefs contents lbl_loco []
+    let contents2 = loadRefs contents lbl_loco []
 
     -- Pass 3
     writer <- openBinaryFile "first.bin" WriteMode
