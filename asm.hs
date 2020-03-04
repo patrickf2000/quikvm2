@@ -8,6 +8,12 @@ import Data.Binary
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BL
 import Data.Int
+
+-- Types
+data LblLoco = LblLoco {
+      name :: String
+    , loco :: Int
+    } deriving (Show)
     
 -- Write a single opcode to binary
 write_opcode writer op = hPutChar writer (chr op)
@@ -26,22 +32,90 @@ parse_ln tokens writer
     | (head tokens) == "exit" = write_opcode writer 0x10
     | otherwise = write_opcode writer 0x00
     
--- Main file reading function
-read_file2 reader writer = do
+-- Pass 3 reading function
+read_file3 reader writer = do
     iseof <- hIsEOF reader
     if iseof
         then return ()
         else do
             ln <- hGetLine reader
             parse_ln (words ln) writer
-            read_file2 reader writer
+            read_file3 reader writer
+            
+-- Pass 2
+-- In this pass, we check labels and other label references
+-- (mainly jumps)
+findLabel [] _ = 0
+findLabel (x:xs) lbl_name = do
+    if (name x) == lbl_name
+        then loco x
+        else findLabel xs lbl_name
+
+checkRef line labels
+    | (head (words line)) == "lbl" = do
+        let tokens = words line
+        let no = findLabel labels (last tokens)
+        "lbl " ++ (show no)
+    | (head (words line)) == "jmp" = do
+        let tokens = words line
+        let no = findLabel labels (last tokens)
+        "jmp " ++ (show no)
+    | otherwise = line
+
+loadRefs [] _ contents2 = reverse contents2
+loadRefs (x:xs) labels contents2 = do
+    let s = checkRef x labels
+    loadRefs xs labels (s : contents2)
+            
+-- Pass 1
+-- Check to see if we have a label
+check_lbl :: [String] -> [LblLoco] -> Int -> [LblLoco]
+check_lbl tokens loco ln_no
+    | (head tokens) == "lbl" = do
+        let name = (last tokens)
+        let l = LblLoco {
+            name = name
+            ,loco = ln_no
+        }
+        l : loco
+    | otherwise = loco
+            
+-- Pass 1 reading function
+loadLabels :: [String] -> [LblLoco] -> Int -> [LblLoco]
+loadLabels [] loco _ = reverse loco
+loadLabels (x:xs) loco ln_no = do
+    let loco2 = check_lbl (words x) loco ln_no
+    loadLabels xs loco2 (ln_no + 1)
+            
+-- Load the file to memory
+loadFile reader contents = do
+    iseof <- hIsEOF reader
+    if iseof
+        then return (reverse contents)
+        else do
+            ln <- hGetLine reader
+            loadFile reader (ln : contents)
 
 -- The main function
 main = do
+    -- Load the file
+    reader1 <- openFile "first.asm" ReadMode
+    contents <- loadFile reader1 []
+    hClose reader1
+    
+    -- Pass 1 (cache the labels)
+    let lbl_loco = loadLabels contents [] 0
+    putStrLn $ ("Labels: ") ++ (show lbl_loco)
+    
+    -- Pass 2 (update references)
+    let lbl_refs = loadRefs contents lbl_loco []
+    putStrLn $ ("Refs: ") ++ (show lbl_refs)
+
+    -- Pass 3
     writer <- openBinaryFile "first.bin" WriteMode
 
     reader <- openFile "first.asm" ReadMode
-    read_file2 reader writer
+    read_file3 reader writer
     
     hClose reader
     hClose writer
