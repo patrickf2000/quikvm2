@@ -17,16 +17,19 @@ data LblLoco = LblLoco {
     
 -- Write a single opcode to binary
 write_opcode writer op = hPutChar writer (chr op)
+
+-- Write an integer
+writeInt writer i_str = do
+    let i = read (i_str) :: Int32
+    let i_bin = encode (i :: Int32)
+    let i_bin2 = BL.toStrict i_bin
+    BS.hPut writer i_bin2
     
 -- Parse and write
 parseLn tokens writer
     | (head tokens) == "i_load" = do
         write_opcode writer 0x20
-        
-        let i = read (last tokens) :: Int32
-        let i_bin = encode (i :: Int32)
-        let i_bin2 = BL.toStrict i_bin
-        BS.hPut writer i_bin2
+        writeInt writer (last tokens)
     | (head tokens) == "i_add" = write_opcode writer 0x24
     | (head tokens) == "i_print" = write_opcode writer 0x29
     | (head tokens) == "exit" = write_opcode writer 0x10
