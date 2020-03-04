@@ -8,14 +8,11 @@ import Data.Binary
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BL
 import Data.Int
-
-write_out writer [] = return ()
-write_out writer (x:xs) = do
-    hPutChar writer (chr x)
-    write_out writer xs
     
+-- Write a single opcode to binary
 write_opcode writer op = hPutChar writer (chr op)
     
+-- Parse and write
 parse_ln tokens writer
     | (head tokens) == "i_load" = do
         write_opcode writer 0x20
@@ -29,22 +26,22 @@ parse_ln tokens writer
     | (head tokens) == "exit" = write_opcode writer 0x10
     | otherwise = write_opcode writer 0x00
     
-read_file reader writer = do
+-- Main file reading function
+read_file2 reader writer = do
     iseof <- hIsEOF reader
     if iseof
         then return ()
         else do
             ln <- hGetLine reader
             parse_ln (words ln) writer
-            read_file reader writer
+            read_file2 reader writer
 
+-- The main function
 main = do
     writer <- openBinaryFile "first.bin" WriteMode
-    --let sig = [0x51, 0x55, 0x49, 0x43, 0x4B]
-    --write_out writer sig
 
     reader <- openFile "first.asm" ReadMode
-    read_file reader writer
+    read_file2 reader writer
     
     hClose reader
     hClose writer
