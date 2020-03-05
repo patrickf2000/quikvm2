@@ -21,6 +21,11 @@ data LblLoco = LblLoco {
     , loco :: Int
     } deriving (Show)
     
+data VarLoco = VarLoco {
+      vName :: String
+    , vLoco :: Int
+    } deriving (Show)
+    
 -- Write a single opcode to binary
 writeOpcode writer op = hPutChar writer (chr op)
 
@@ -123,12 +128,31 @@ check_lbl tokens loco ln_no
         l : loco
     | otherwise = loco
             
--- Pass 1 reading function
+-- Reading function (for labels)
 loadLabels :: [String] -> [LblLoco] -> Int -> [LblLoco]
 loadLabels [] loco _ = reverse loco
 loadLabels (x:xs) loco ln_no = do
     let loco2 = check_lbl (words x) loco ln_no
     loadLabels xs loco2 (ln_no + 1)
+    
+-- Check for variables and load their locations
+checkVar :: [String] -> [VarLoco] -> Int -> [VarLoco]
+checkVar tokens loco vars
+    | (head tokens) == "i_var" = do
+        let name = (last tokens)
+        let vl = VarLoco {
+            vName = name,
+            vLoco = vars
+        }
+        vl : loco
+    | otherwise = loco
+    
+-- Reading function (for variables)
+loadVars :: [String] -> [VarLoco] -> Int -> [VarLoco]
+loadVars [] loco _ = reverse loco
+loadVars (x:xs) loco vars = do
+    let loco2 = checkVar (words x) loco vars
+    loadVars xs loco2 (vars + 1)
             
 -- Load the file to memory
 loadFile reader contents = do
@@ -154,8 +178,9 @@ main = do
     contents <- loadFile reader1 []
     hClose reader1
     
-    -- Pass 1 (cache the labels)
+    -- Pass 1 (cache the labels/references)
     let lbl_loco = loadLabels contents [] 0
+    let var_loco = loadVars contents [] 0
     
     -- Pass 2 (update references)
     let contents2 = loadRefs contents lbl_loco []
