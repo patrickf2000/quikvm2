@@ -2,6 +2,7 @@
 module Main(main) where
 
 import System.IO
+import System.Environment
 import Data.Char
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString as BS
@@ -11,6 +12,7 @@ import Data.Int
 import Data.Binary as B
 
 import Opcode
+import Common
 
 -- Represents an instruction
 data Instr = Instr {
@@ -133,7 +135,11 @@ loadFile reader contents = do
 
 -- The main function
 main = do
-    reader <- openBinaryFile "first.bin" ReadMode
+    args <- getArgs
+    checkArgs args
+    let path = args !! 0
+
+    reader <- openBinaryFile path ReadMode
     contents <- loadFile reader []
     execute contents [] 0
     hClose reader

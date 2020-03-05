@@ -2,6 +2,8 @@
 module Main(main) where
 
 import System.IO
+import System.Environment
+import System.FilePath.Posix
 import Numeric
 import Data.Char
 import Data.Binary
@@ -10,6 +12,7 @@ import qualified Data.ByteString.Lazy as BL
 import Data.Int
 
 import Opcode
+import Common
 
 -- Types
 data LblLoco = LblLoco {
@@ -106,11 +109,16 @@ loadFile reader contents = do
             if len == 0
                 then loadFile reader contents
                 else loadFile reader (ln : contents)
-
+        
 -- The main function
 main = do
+    args <- getArgs
+    checkArgs args
+    let path = args !! 0
+    let outName = (takeBaseName path) ++ ".bin"
+    
     -- Load the file
-    reader1 <- openFile "first.asm" ReadMode
+    reader1 <- openFile path ReadMode
     contents <- loadFile reader1 []
     hClose reader1
     
@@ -121,6 +129,6 @@ main = do
     let contents2 = loadRefs contents lbl_loco []
 
     -- Pass 3
-    writer <- openBinaryFile "first.bin" WriteMode
+    writer <- openBinaryFile outName WriteMode
     asmFile contents2 writer
     

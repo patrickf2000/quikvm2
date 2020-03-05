@@ -19,7 +19,7 @@ executable qkasm
   main-is:             Assembler.hs
   -- other-modules:       Opcode.hs
   -- other-extensions:    
-  build-depends:       base >=4.9 && <4.10, binary, bytestring
+  build-depends:       base >=4.9 && <4.10, binary, bytestring, filepath
   hs-source-dirs:      src
   default-language:    Haskell2010
   
