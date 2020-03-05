@@ -48,6 +48,17 @@ decoder instr stack pc
     | (toChar IPop) == (opcode instr) = do
         putStrLn "i_pop"
         return ((show pc2) : stack)
+        
+    -- s_load
+    | (toChar SLoad) == (opcode instr) = do
+        let s = sArg instr
+        let s2 = s : stack
+        return ((show pc2) : s2)
+    
+    -- s_print
+    | (toChar SPrint) == (opcode instr) = do
+        putStrLn (head stack)
+        return ((show pc2) : stack)
     
     -- exit
     | (toChar Exit) == (opcode instr) = return stack
@@ -123,10 +134,14 @@ buildInstr op reader contents
     -- s_load
     | (toChar SLoad) == op = do
         no <- readInt reader
-        putStrLn $ "(sload) Len: " ++ (show no)
         str <- readStr reader no
-        putStrLn $ "(sload) Str: " ++ str
-        return contents
+        let instr = Instr {
+            opcode = op,
+            iArg = no,
+            sArg = str
+        }
+        let c2 = instr : contents
+        return c2
         
     -- exit
     | (toChar Exit) == op = return contents
