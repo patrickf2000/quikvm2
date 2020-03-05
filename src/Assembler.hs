@@ -65,6 +65,7 @@ parseLn tokens writer
         writeInt writer (show len)
         writeStr writer (reverse str)
     | (head tokens) == "s_print" = write_opcode writer (toOpcode SPrint)
+    | (head tokens) == "s_pop" = write_opcode writer (toOpcode SPop)
     | (head tokens) == "exit" = write_opcode writer (toOpcode Exit)
     | (head tokens) == "lbl" = do
         write_opcode writer (toOpcode Lbl)

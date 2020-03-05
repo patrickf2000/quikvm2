@@ -66,6 +66,11 @@ decoder instr stack pc
     | (toChar SPrint) == (opcode instr) = do
         putStrLn (head stack)
         return ((show pc2) : stack)
+        
+    -- s_pop
+    | (toChar SPop) == (opcode instr) = do
+        let s2 = tail stack
+        return ((show pc2) : s2)
     
     -- exit
     | (toChar Exit) == (opcode instr) = return stack

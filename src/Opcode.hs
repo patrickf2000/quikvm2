@@ -4,7 +4,7 @@ import Data.Char
 
 -- Instructions
 data OpCode = ILoad | IAdd | IPrint | IInput | IPop
-        | SLoad | SPrint
+        | SLoad | SPrint | SPop
         | Exit | Lbl | Jmp | None
         deriving(Show, Eq)
         
@@ -16,6 +16,7 @@ toOpcode op
     | op == IPop = 0x31
     | op == SLoad = 0x60
     | op == SPrint = 0x61
+    | op == SPop = 0x62
     | op == Exit = 0x10
     | op == Lbl = 0x11
     | op == Jmp = 0xA3
