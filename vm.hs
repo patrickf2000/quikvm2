@@ -81,41 +81,25 @@ readInt reader = do
     return ()
     return no
     
+-- Returns whether we have an argument instruction
+isIntArg op
+    -- i_load
+    | (chr 0x20) == op = True
+    -- jmp
+    | (chr 0xA3) == op = True
+    -- lbl
+    | (chr 0x11) == op = True
+    -- All others
+    | otherwise = False
+    
 -- Builds an instruction
 buildInstr op reader contents
-    -- i_load
-    | (chr 0x20) == op = do
+    -- Integer argument instructions
+    | (isIntArg op) == True = do
         no <- readInt reader
         let instr = Instr {
             opcode = op,
             iArg = no
-        }
-        let c2 = instr : contents
-        return c2
-        
-    -- i_add
-    | (chr 0x24) == op = do
-        let instr = Instr {
-            opcode = op,
-            iArg = 0
-        }
-        let c2 = instr : contents
-        return c2
-        
-    -- i_print
-    | (chr 0x29) == op = do
-        let instr = Instr {
-            opcode = op,
-            iArg = 0
-        }
-        let c2 = instr : contents
-        return c2
-        
-    -- i_pop
-    | (chr 0x31) == op = do
-        let instr = Instr {
-            opcode = op,
-            iArg = 0
         }
         let c2 = instr : contents
         return c2
@@ -123,28 +107,17 @@ buildInstr op reader contents
     -- exit
     | (chr 0x10) == op = return contents
     
-    -- lbl
-    | (chr 0x11) == op = do
-        no <- readInt reader
-        let instr = Instr {
-            opcode = op,
-            iArg = no
-        }
-        let c2 = instr : contents
-        return c2
-    
-    -- jmp
-    | (chr 0xA3) == op = do
-        no <- readInt reader
-        let instr = Instr {
-            opcode = op,
-            iArg = no
-        }
-        let c2 = instr : contents
-        return c2
+    -- null
+    | (chr 0x00) == op = return contents
         
-    -- unknown instruction
-    | otherwise = return contents
+    -- Other instruction instruction
+    | otherwise = do
+        let instr = Instr {
+            opcode = op,
+            iArg = 0
+        }
+        let c2 = instr : contents
+        return c2
     
 -- Load and execute the file
 loadFile reader contents = do
