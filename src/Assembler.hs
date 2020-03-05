@@ -91,8 +91,9 @@ asmFile (x:xs) writer = do
     asmFile xs writer
             
 -- Pass 2
--- In this pass, we check labels and other label references
--- (mainly jumps)
+-- In this pass, we check labels and variable references
+
+-- Label stuff
 findLabel [] _ = 0
 findLabel (x:xs) lbl_name = do
     if (name x) == lbl_name
@@ -114,6 +115,29 @@ loadRefs [] _ contents2 = reverse contents2
 loadRefs (x:xs) labels contents2 = do
     let s = checkRef x labels
     loadRefs xs labels (s : contents2)
+    
+-- Variable stuff
+findVar [] _ = 0
+findVar (x:xs) varName = do
+    if (vName x) == varName
+        then vLoco x
+        else findVar xs varName
+        
+checkVarRef line vars
+    | (head (words line)) == "i_store" = do
+        let no = findVar vars (last tokens)
+        "i_store " ++ (show no)
+    | (head (words line)) == "i_load_var" = do
+        let no = findVar vars (last tokens)
+        "i_load_var " ++ (show no)
+    | otherwise = line
+    where
+        tokens = words line
+        
+loadVarRefs [] _ contents2 = reverse contents2
+loadVarRefs (x:xs) vars contents2 = do
+    let s = checkVarRef x vars
+    loadVarRefs xs vars (s : contents2)
             
 -- Pass 1
 -- Check to see if we have a label
@@ -184,8 +208,9 @@ main = do
     
     -- Pass 2 (update references)
     let contents2 = loadRefs contents lbl_loco []
+    let contents3 = loadVarRefs contents2 var_loco []
 
     -- Pass 3
     writer <- openBinaryFile outName WriteMode
-    asmFile contents2 writer
+    asmFile contents3 writer
     
