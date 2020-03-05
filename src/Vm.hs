@@ -18,6 +18,7 @@ import Common
 data Instr = Instr {
       opcode    :: Char
     , iArg      :: Int32
+    , sArg      :: String
     } deriving (Show)
     
 -- Decodes an individual instruction
@@ -85,6 +86,16 @@ readInt reader = do
     return ()
     return no
     
+-- Reads a string from a file
+buildStr str reader 0 = return (reverse str)
+buildStr str reader i = do
+    c <- hGetChar reader
+    buildStr (c : str) reader (i - 1)
+    
+readStr reader len = do
+    s <- buildStr [] reader len
+    return s
+    
 -- Returns whether we have an argument instruction
 isIntArg op
     -- i_load
@@ -103,10 +114,19 @@ buildInstr op reader contents
         no <- readInt reader
         let instr = Instr {
             opcode = op,
-            iArg = no
+            iArg = no,
+            sArg = ""
         }
         let c2 = instr : contents
         return c2
+        
+    -- s_load
+    | (toChar SLoad) == op = do
+        no <- readInt reader
+        putStrLn $ "(sload) Len: " ++ (show no)
+        str <- readStr reader no
+        putStrLn $ "(sload) Str: " ++ str
+        return contents
         
     -- exit
     | (toChar Exit) == op = return contents
@@ -118,7 +138,8 @@ buildInstr op reader contents
     | otherwise = do
         let instr = Instr {
             opcode = op,
-            iArg = 0
+            iArg = 0,
+            sArg = ""
         }
         let c2 = instr : contents
         return c2

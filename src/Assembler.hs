@@ -8,6 +8,7 @@ import Numeric
 import Data.Char
 import Data.Binary
 import qualified Data.ByteString as BS
+import qualified Data.ByteString.UTF8 as BSU
 import qualified Data.ByteString.Lazy as BL
 import Data.Int
 
@@ -32,9 +33,14 @@ writeInt writer i_str = do
     
 -- Writes a string
 writeStr writer str = do
-    let s_bin = encode (str :: String)
-    let s_bin2 = BL.toStrict s_bin
-    BS.hPut writer s_bin2
+    let s_bin = BSU.fromString str
+    BS.hPut writer s_bin
+    
+-- Remove quotes from a string
+toString str = do
+    let s1 = tail (str)
+    let s2 = tail (reverse s1)
+    reverse s2
     
 -- Parse and write
 parseLn tokens writer
@@ -46,9 +52,9 @@ parseLn tokens writer
     | (head tokens) == "i_pop" = write_opcode writer (toOpcode IPop)
     | (head tokens) == "s_load" = do
         write_opcode writer (toOpcode SLoad)
-        let len = length (last tokens)
+        let str = toString (last tokens)
+        let len = length str
         writeInt writer (show len)
-        let str = last tokens
         writeStr writer str
     | (head tokens) == "s_print" = write_opcode writer (toOpcode SPrint)
     | (head tokens) == "exit" = write_opcode writer (toOpcode Exit)
