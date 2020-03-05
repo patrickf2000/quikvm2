@@ -38,6 +38,46 @@ decoder instr stack pc
         let answer = n1 + n2
         let stack_f = (show answer) : stack3
         return ((show pc2) : stack_f)
+        
+    -- i_sub
+    | (toChar ISub) == (opcode instr) = do
+        let n1 = read (head stack) :: Int
+        let stack2 = tail stack
+        let n2 = read (head stack2) :: Int
+        let stack3 = tail stack2
+        let answer = n1 - n2
+        let stack_f = (show answer) : stack3
+        return ((show pc2) : stack_f)
+        
+    -- i_mul
+    | (toChar IMul) == (opcode instr) = do
+        let n1 = read (head stack) :: Int
+        let stack2 = tail stack
+        let n2 = read (head stack2) :: Int
+        let stack3 = tail stack2
+        let answer = n1 * n2
+        let stack_f = (show answer) : stack3
+        return ((show pc2) : stack_f)
+        
+    -- i_div
+    | (toChar IDiv) == (opcode instr) = do
+        let n1 = read (head stack) :: Int
+        let stack2 = tail stack
+        let n2 = read (head stack2) :: Int
+        let stack3 = tail stack2
+        let answer = n1 `div` n2
+        let stack_f = (show answer) : stack3
+        return ((show pc2) : stack_f)
+        
+    -- i_mod
+    | (toChar IMod) == (opcode instr) = do
+        let n1 = read (head stack) :: Int
+        let stack2 = tail stack
+        let n2 = read (head stack2) :: Int
+        let stack3 = tail stack2
+        let answer = n1 `rem` n2
+        let stack_f = (show answer) : stack3
+        return ((show pc2) : stack_f)
     
     -- i_print
     | (toChar IPrint) == (opcode instr) = do
