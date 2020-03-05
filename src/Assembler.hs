@@ -30,6 +30,12 @@ writeInt writer i_str = do
     let i_bin2 = BL.toStrict i_bin
     BS.hPut writer i_bin2
     
+-- Writes a string
+writeStr writer str = do
+    let s_bin = encode (str :: String)
+    let s_bin2 = BL.toStrict s_bin
+    BS.hPut writer s_bin2
+    
 -- Parse and write
 parseLn tokens writer
     | (head tokens) == "i_load" = do
@@ -38,6 +44,13 @@ parseLn tokens writer
     | (head tokens) == "i_add" = write_opcode writer (toOpcode IAdd)
     | (head tokens) == "i_print" = write_opcode writer (toOpcode IPrint)
     | (head tokens) == "i_pop" = write_opcode writer (toOpcode IPop)
+    | (head tokens) == "s_load" = do
+        write_opcode writer (toOpcode SLoad)
+        let len = length (last tokens)
+        writeInt writer (show len)
+        let str = last tokens
+        writeStr writer str
+    | (head tokens) == "s_print" = write_opcode writer (toOpcode SPrint)
     | (head tokens) == "exit" = write_opcode writer (toOpcode Exit)
     | (head tokens) == "lbl" = do
         write_opcode writer (toOpcode Lbl)
