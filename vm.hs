@@ -17,12 +17,12 @@ data Instr = Instr {
     } deriving (Show)
     
 -- Decodes an individual instruction
-decoder instr stack
+decoder instr stack pc
     -- i_load
     | (chr 0x20) == (opcode instr) = do
         let i = iArg instr
         let s2 = (show i) : stack
-        return s2
+        return ((show pc2) : s2)
     
     -- i_add
     | (chr 0x24) == (opcode instr) = do
@@ -32,32 +32,32 @@ decoder instr stack
         let stack3 = tail stack2
         let answer = n1 + n2
         let stack_f = (show answer) : stack3
-        return stack_f
+        return ((show pc2) : stack_f)
     
     -- i_print
     | (chr 0x29) == (opcode instr) = do
         putStrLn (head stack)
-        return stack
+        return ((show pc2) : stack)
     
     -- i_pop
     | (chr 0x31) == (opcode instr) = do
         putStrLn "i_pop"
-        return stack
+        return ((show pc2) : stack)
     
     -- exit
     | (chr 0x10) == (opcode instr) = return stack
     
     -- lbl
-    | (chr 0x11) == (opcode instr) = do
-        putStrLn "lbl"
-        return stack
+    | (chr 0x11) == (opcode instr) = return ((show pc2) : stack)
     
     -- jmp
     | (chr 0xA3) == (opcode instr) = do
-        putStrLn "jmp"
-        return stack
+        let loco = iArg instr
+        return ((show loco) : stack)
     
     | otherwise = return stack
+    where
+        pc2 = pc + 1
     
 -- The main execution function
 execute contents stack pc = do
@@ -65,8 +65,9 @@ execute contents stack pc = do
         then return ()
         else do
             let instr = contents !! pc
-            stack2 <- decoder instr stack
-            execute contents stack2 (pc + 1)
+            stack2 <- decoder instr stack pc
+            let inc = read (head stack2) :: Int
+            execute contents (tail stack2) (inc)
 
 -- Reads an integer from the file
 readInt reader = do
