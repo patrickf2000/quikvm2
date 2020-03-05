@@ -22,7 +22,7 @@ data LblLoco = LblLoco {
     } deriving (Show)
     
 -- Write a single opcode to binary
-write_opcode writer op = hPutChar writer (chr op)
+writeOpcode writer op = hPutChar writer (chr op)
 
 -- Write an integer
 writeInt writer i_str = do
@@ -51,29 +51,29 @@ buildStr (x:xs) s = do
 -- Parse and write
 parseLn tokens writer
     | (head tokens) == "i_load" = do
-        write_opcode writer (toOpcode ILoad)
+        writeOpcode writer (toOpcode ILoad)
         writeInt writer (last tokens)
-    | (head tokens) == "i_add" = write_opcode writer (toOpcode IAdd)
-    | (head tokens) == "i_print" = write_opcode writer (toOpcode IPrint)
-    | (head tokens) == "i_input" = write_opcode writer (toOpcode IInput)
-    | (head tokens) == "i_pop" = write_opcode writer (toOpcode IPop)
+    | (head tokens) == "i_add" = writeOpcode writer (toOpcode IAdd)
+    | (head tokens) == "i_print" = writeOpcode writer (toOpcode IPrint)
+    | (head tokens) == "i_input" = writeOpcode writer (toOpcode IInput)
+    | (head tokens) == "i_pop" = writeOpcode writer (toOpcode IPop)
     | (head tokens) == "s_load" = do
-        write_opcode writer (toOpcode SLoad)
+        writeOpcode writer (toOpcode SLoad)
         let s1 = buildStr (tail tokens) []
         let str = toString (toString s1)
         let len = length str
         writeInt writer (show len)
         writeStr writer (reverse str)
-    | (head tokens) == "s_print" = write_opcode writer (toOpcode SPrint)
-    | (head tokens) == "s_pop" = write_opcode writer (toOpcode SPop)
-    | (head tokens) == "exit" = write_opcode writer (toOpcode Exit)
+    | (head tokens) == "s_print" = writeOpcode writer (toOpcode SPrint)
+    | (head tokens) == "s_pop" = writeOpcode writer (toOpcode SPop)
+    | (head tokens) == "exit" = writeOpcode writer (toOpcode Exit)
     | (head tokens) == "lbl" = do
-        write_opcode writer (toOpcode Lbl)
+        writeOpcode writer (toOpcode Lbl)
         writeInt writer (last tokens)
     | (head tokens) == "jmp" = do
-        write_opcode writer (toOpcode Jmp)
+        writeOpcode writer (toOpcode Jmp)
         writeInt writer (last tokens)
-    | otherwise = write_opcode writer (toOpcode None)
+    | otherwise = writeOpcode writer (toOpcode None)
     
 -- Pass 3 reading function
 asmFile [] writer = hClose writer
