@@ -43,6 +43,13 @@ decoder instr stack pc
     | (toChar IPrint) == (opcode instr) = do
         putStrLn (head stack)
         return ((show pc2) : stack)
+        
+    -- i_input
+    | (toChar IInput) == (opcode instr) = do
+        str <- getLine
+        let i = read str :: Int
+        let s2 = (show i) : stack
+        return ((show pc2) : s2)
     
     -- i_pop
     | (toChar IPop) == (opcode instr) = do

@@ -55,6 +55,7 @@ parseLn tokens writer
         writeInt writer (last tokens)
     | (head tokens) == "i_add" = write_opcode writer (toOpcode IAdd)
     | (head tokens) == "i_print" = write_opcode writer (toOpcode IPrint)
+    | (head tokens) == "i_input" = write_opcode writer (toOpcode IInput)
     | (head tokens) == "i_pop" = write_opcode writer (toOpcode IPop)
     | (head tokens) == "s_load" = do
         write_opcode writer (toOpcode SLoad)
