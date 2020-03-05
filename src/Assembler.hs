@@ -58,6 +58,15 @@ parseLn tokens writer
     | (head tokens) == "i_load" = do
         writeOpcode writer (toOpcode ILoad)
         writeInt writer (last tokens)
+    | (head tokens) == "i_store" = do
+        writeOpcode writer (toOpcode IStore)
+        writeInt writer (last tokens)
+    | (head tokens) == "i_var" = do
+        writeOpcode writer (toOpcode IVar)
+        writeInt writer (last tokens)
+    | (head tokens) == "i_load_var" = do
+        writeOpcode writer (toOpcode ILoadVar)
+        writeInt writer (last tokens)
     | (head tokens) == "i_add" = writeOpcode writer (toOpcode IAdd)
     | (head tokens) == "i_sub" = writeOpcode writer (toOpcode ISub)
     | (head tokens) == "i_mul" = writeOpcode writer (toOpcode IMul)
@@ -124,6 +133,9 @@ findVar (x:xs) varName = do
         else findVar xs varName
         
 checkVarRef line vars
+    | (head (words line)) == "i_var" = do
+        let no = findVar vars (last tokens)
+        "i_var " ++ (show no)
     | (head (words line)) == "i_store" = do
         let no = findVar vars (last tokens)
         "i_store " ++ (show no)

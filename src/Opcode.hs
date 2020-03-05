@@ -3,7 +3,8 @@ module Opcode(OpCode(..), toOpcode, toChar) where
 import Data.Char
 
 -- Instructions
-data OpCode = ILoad | IAdd | ISub | IMul | IDiv | IMod
+data OpCode = ILoad | IStore | IVar | ILoadVar
+        | IAdd | ISub | IMul | IDiv | IMod
         | IPrint | IInput | IPop
         | SLoad | SPrint | SPop
         | Exit | Lbl | Jmp | None
@@ -11,6 +12,9 @@ data OpCode = ILoad | IAdd | ISub | IMul | IDiv | IMod
         
 toOpcode op
     | op == ILoad = 0x20
+    | op == IStore = 0x21
+    | op == IVar = 0x22
+    | op == ILoadVar = 0x23
     | op == IAdd = 0x24
     | op == ISub = 0x25
     | op == IMul = 0x26

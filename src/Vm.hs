@@ -21,6 +21,16 @@ data Instr = Instr {
     , sArg      :: String
     } deriving (Show)
     
+-- Represents runtime data
+data RetData = RetData {
+      rstack     :: [String]
+    , rvars      :: [String]
+    , rpc        :: Int
+    } deriving (Show)
+    
+-- Builds runtime data
+buildRData stack vars pc = RetData {rstack=stack, rvars=vars, rpc=pc}
+    
 -- Returns whether we have a math function
 isMath instr
     | (toChar IAdd) == (opcode instr) = True
@@ -31,102 +41,106 @@ isMath instr
     | otherwise = False
     
 -- Solves a math function
-decodeMath instr stack pc
+decodeMath instr rdata
     | (toChar IAdd) == (opcode instr) = do
         let answer = n1 + n2
         let stack_f = (show answer) : stack3
-        return ((show pc2) : stack_f)
+        return (buildRData stack_f vars (pc+1))
     | (toChar ISub) == (opcode instr) = do
         let answer = n1 - n2
         let stack_f = (show answer) : stack3
-        return ((show pc2) : stack_f)
+        return (buildRData stack_f vars (pc+1))
     | (toChar IMul) == (opcode instr) = do
         let answer = n1 * n2
         let stack_f = (show answer) : stack3
-        return ((show pc2) : stack_f)
+        return (buildRData stack_f vars (pc+1))
     | (toChar IDiv) == (opcode instr) = do
         let answer = n1 `div` n2
         let stack_f = (show answer) : stack3
-        return ((show pc2) : stack_f)
+        return (buildRData stack_f vars (pc+1))
     | (toChar IMod) == (opcode instr) = do
         let answer = n1 `rem` n2
         let stack_f = (show answer) : stack3
-        return ((show pc2) : stack_f)
+        return (buildRData stack_f vars (pc+1))
     where
+        stack = rstack rdata
+        vars = rvars rdata
+        pc = rpc rdata
         n1 = read (head stack) :: Int
         stack2 = tail stack
         n2 = read (head stack2) :: Int
         stack3 = tail stack2
-        pc2 = pc + 1
         
 -- Decodes an individual instruction
-decoder instr stack pc
+decoder instr rdata
     -- i_load
     | (toChar ILoad) == (opcode instr) = do
         let i = iArg instr
         let s2 = (show i) : stack
-        return ((show pc2) : s2)
+        return (buildRData s2 vars (pc+1))
     
     -- i_math
-    | (isMath instr) == True = (decodeMath instr stack pc)
+    | (isMath instr) == True = (decodeMath instr rdata)
     
     -- i_print
     | (toChar IPrint) == (opcode instr) = do
         putStrLn (head stack)
-        return ((show pc2) : stack)
+        return (buildRData stack vars (pc+1))
         
     -- i_input
     | (toChar IInput) == (opcode instr) = do
         str <- getLine
         let i = read str :: Int
         let s2 = (show i) : stack
-        return ((show pc2) : s2)
+        return (buildRData s2 vars (pc+1))
     
     -- i_pop
     | (toChar IPop) == (opcode instr) = do
         putStrLn "i_pop"
-        return ((show pc2) : stack)
+        return (buildRData stack vars (pc+1))
         
     -- s_load
     | (toChar SLoad) == (opcode instr) = do
         let s = sArg instr
         let s2 = s : stack
-        return ((show pc2) : s2)
+        return (buildRData s2 vars (pc+1))
     
     -- s_print
     | (toChar SPrint) == (opcode instr) = do
         putStrLn (head stack)
-        return ((show pc2) : stack)
+        return (buildRData stack vars (pc+1))
         
     -- s_pop
     | (toChar SPop) == (opcode instr) = do
         let s2 = tail stack
-        return ((show pc2) : s2)
+        return (buildRData s2 vars (pc+1))
     
     -- exit
-    | (toChar Exit) == (opcode instr) = return stack
+    | (toChar Exit) == (opcode instr) = return (buildRData stack vars pc)
     
     -- lbl
-    | (toChar Lbl) == (opcode instr) = return ((show pc2) : stack)
+    | (toChar Lbl) == (opcode instr) = return (buildRData stack vars (pc+1))
     
     -- jmp
     | (toChar Jmp) == (opcode instr) = do
-        let loco = iArg instr
-        return ((show loco) : stack)
+        let loco = fromEnum (iArg instr)
+        return (buildRData stack vars loco)
     
-    | otherwise = return stack
+    | otherwise = return (buildRData stack vars pc)
     where
-        pc2 = pc + 1
+        stack = rstack rdata
+        vars = rvars rdata
+        pc = rpc rdata
     
 -- The main execution function
-execute contents stack pc = do
+execute contents rdata = do
+    let pc = rpc rdata
     if pc == (length contents)
         then return ()
         else do
             let instr = contents !! pc
-            stack2 <- decoder instr stack pc
-            let inc = read (head stack2) :: Int
-            execute contents (tail stack2) (inc)
+            rdata2 <- decoder instr rdata
+            execute contents rdata2
 
 -- Reads an integer from the file
 readInt reader = do
@@ -154,6 +168,12 @@ readStr reader len = do
 isIntArg op
     -- i_load
     | (toChar ILoad) == op = True
+    -- i_var
+    | (toChar IVar) == op = True
+    -- i_store
+    | (toChar IStore) == op = True
+    -- i_load_var
+    | (toChar ILoadVar) == op = True
     -- jmp
     | (toChar Jmp) == op = True
     -- lbl
@@ -217,9 +237,11 @@ main = do
     args <- getArgs
     checkArgs args
     let path = args !! 0
+    
+    let rdata = RetData { rstack=[], rvars=[], rpc=0}
 
     reader <- openBinaryFile path ReadMode
     contents <- loadFile reader []
-    execute contents [] 0
+    execute contents rdata
     hClose reader
     
