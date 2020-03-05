@@ -42,6 +42,12 @@ toString str = do
     let s2 = tail (reverse s1)
     reverse s2
     
+-- Builds a list of string
+buildStr [] s = reverse (s ++ "\"")
+buildStr (x:xs) s = do
+    let s2 = s ++ " " ++ x
+    buildStr xs s2
+    
 -- Parse and write
 parseLn tokens writer
     | (head tokens) == "i_load" = do
@@ -52,10 +58,11 @@ parseLn tokens writer
     | (head tokens) == "i_pop" = write_opcode writer (toOpcode IPop)
     | (head tokens) == "s_load" = do
         write_opcode writer (toOpcode SLoad)
-        let str = toString (last tokens)
+        let s1 = buildStr (tail tokens) []
+        let str = toString (toString s1)
         let len = length str
         writeInt writer (show len)
-        writeStr writer str
+        writeStr writer (reverse str)
     | (head tokens) == "s_print" = write_opcode writer (toOpcode SPrint)
     | (head tokens) == "exit" = write_opcode writer (toOpcode Exit)
     | (head tokens) == "lbl" = do
