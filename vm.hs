@@ -10,6 +10,8 @@ import qualified Data.Binary.Get as B
 import Data.Int
 import Data.Binary as B
 
+import Opcode
+
 -- Represents an instruction
 data Instr = Instr {
       opcode    :: Char
@@ -19,13 +21,13 @@ data Instr = Instr {
 -- Decodes an individual instruction
 decoder instr stack pc
     -- i_load
-    | (chr 0x20) == (opcode instr) = do
+    | (toChar ILoad) == (opcode instr) = do
         let i = iArg instr
         let s2 = (show i) : stack
         return ((show pc2) : s2)
     
     -- i_add
-    | (chr 0x24) == (opcode instr) = do
+    | (toChar IAdd) == (opcode instr) = do
         let n1 = read (head stack) :: Int
         let stack2 = tail stack
         let n2 = read (head stack2) :: Int
@@ -35,23 +37,23 @@ decoder instr stack pc
         return ((show pc2) : stack_f)
     
     -- i_print
-    | (chr 0x29) == (opcode instr) = do
+    | (toChar IPrint) == (opcode instr) = do
         putStrLn (head stack)
         return ((show pc2) : stack)
     
     -- i_pop
-    | (chr 0x31) == (opcode instr) = do
+    | (toChar IPop) == (opcode instr) = do
         putStrLn "i_pop"
         return ((show pc2) : stack)
     
     -- exit
-    | (chr 0x10) == (opcode instr) = return stack
+    | (toChar Exit) == (opcode instr) = return stack
     
     -- lbl
-    | (chr 0x11) == (opcode instr) = return ((show pc2) : stack)
+    | (toChar Lbl) == (opcode instr) = return ((show pc2) : stack)
     
     -- jmp
-    | (chr 0xA3) == (opcode instr) = do
+    | (toChar Jmp) == (opcode instr) = do
         let loco = iArg instr
         return ((show loco) : stack)
     
@@ -84,11 +86,11 @@ readInt reader = do
 -- Returns whether we have an argument instruction
 isIntArg op
     -- i_load
-    | (chr 0x20) == op = True
+    | (toChar ILoad) == op = True
     -- jmp
-    | (chr 0xA3) == op = True
+    | (toChar Jmp) == op = True
     -- lbl
-    | (chr 0x11) == op = True
+    | (toChar Lbl) == op = True
     -- All others
     | otherwise = False
     
@@ -105,10 +107,10 @@ buildInstr op reader contents
         return c2
         
     -- exit
-    | (chr 0x10) == op = return contents
+    | (toChar Exit) == op = return contents
     
     -- null
-    | (chr 0x00) == op = return contents
+    | (toChar None) == op = return contents
         
     -- Other instruction instruction
     | otherwise = do

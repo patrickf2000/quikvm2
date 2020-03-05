@@ -9,6 +9,8 @@ import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BL
 import Data.Int
 
+import Opcode
+
 -- Types
 data LblLoco = LblLoco {
       name :: String
@@ -28,19 +30,19 @@ writeInt writer i_str = do
 -- Parse and write
 parseLn tokens writer
     | (head tokens) == "i_load" = do
-        write_opcode writer 0x20
+        write_opcode writer (toOpcode ILoad)
         writeInt writer (last tokens)
-    | (head tokens) == "i_add" = write_opcode writer 0x24
-    | (head tokens) == "i_print" = write_opcode writer 0x29
-    | (head tokens) == "i_pop" = write_opcode writer 0x31
-    | (head tokens) == "exit" = write_opcode writer 0x10
+    | (head tokens) == "i_add" = write_opcode writer (toOpcode IAdd)
+    | (head tokens) == "i_print" = write_opcode writer (toOpcode IPrint)
+    | (head tokens) == "i_pop" = write_opcode writer (toOpcode IPop)
+    | (head tokens) == "exit" = write_opcode writer (toOpcode Exit)
     | (head tokens) == "lbl" = do
-        write_opcode writer 0x11
+        write_opcode writer (toOpcode Lbl)
         writeInt writer (last tokens)
     | (head tokens) == "jmp" = do
-        write_opcode writer 0xA3
+        write_opcode writer (toOpcode Jmp)
         writeInt writer (last tokens)
-    | otherwise = write_opcode writer 0x00
+    | otherwise = write_opcode writer (toOpcode None)
     
 -- Pass 3 reading function
 asmFile [] writer = hClose writer
