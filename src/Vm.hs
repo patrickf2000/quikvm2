@@ -21,6 +21,44 @@ data Instr = Instr {
     , sArg      :: String
     } deriving (Show)
     
+-- Returns whether we have a math function
+isMath instr
+    | (toChar IAdd) == (opcode instr) = True
+    | (toChar ISub) == (opcode instr) = True
+    | (toChar IMul) == (opcode instr) = True
+    | (toChar IDiv) == (opcode instr) = True
+    | (toChar IMod) == (opcode instr) = True
+    | otherwise = False
+    
+-- Solves a math function
+decodeMath instr stack pc
+    | (toChar IAdd) == (opcode instr) = do
+        let answer = n1 + n2
+        let stack_f = (show answer) : stack3
+        return ((show pc2) : stack_f)
+    | (toChar ISub) == (opcode instr) = do
+        let answer = n1 - n2
+        let stack_f = (show answer) : stack3
+        return ((show pc2) : stack_f)
+    | (toChar IMul) == (opcode instr) = do
+        let answer = n1 * n2
+        let stack_f = (show answer) : stack3
+        return ((show pc2) : stack_f)
+    | (toChar IDiv) == (opcode instr) = do
+        let answer = n1 `div` n2
+        let stack_f = (show answer) : stack3
+        return ((show pc2) : stack_f)
+    | (toChar IMod) == (opcode instr) = do
+        let answer = n1 `rem` n2
+        let stack_f = (show answer) : stack3
+        return ((show pc2) : stack_f)
+    where
+        n1 = read (head stack) :: Int
+        stack2 = tail stack
+        n2 = read (head stack2) :: Int
+        stack3 = tail stack2
+        pc2 = pc + 1
+        
 -- Decodes an individual instruction
 decoder instr stack pc
     -- i_load
@@ -29,55 +67,8 @@ decoder instr stack pc
         let s2 = (show i) : stack
         return ((show pc2) : s2)
     
-    -- i_add
-    | (toChar IAdd) == (opcode instr) = do
-        let n1 = read (head stack) :: Int
-        let stack2 = tail stack
-        let n2 = read (head stack2) :: Int
-        let stack3 = tail stack2
-        let answer = n1 + n2
-        let stack_f = (show answer) : stack3
-        return ((show pc2) : stack_f)
-        
-    -- i_sub
-    | (toChar ISub) == (opcode instr) = do
-        let n1 = read (head stack) :: Int
-        let stack2 = tail stack
-        let n2 = read (head stack2) :: Int
-        let stack3 = tail stack2
-        let answer = n1 - n2
-        let stack_f = (show answer) : stack3
-        return ((show pc2) : stack_f)
-        
-    -- i_mul
-    | (toChar IMul) == (opcode instr) = do
-        let n1 = read (head stack) :: Int
-        let stack2 = tail stack
-        let n2 = read (head stack2) :: Int
-        let stack3 = tail stack2
-        let answer = n1 * n2
-        let stack_f = (show answer) : stack3
-        return ((show pc2) : stack_f)
-        
-    -- i_div
-    | (toChar IDiv) == (opcode instr) = do
-        let n1 = read (head stack) :: Int
-        let stack2 = tail stack
-        let n2 = read (head stack2) :: Int
-        let stack3 = tail stack2
-        let answer = n1 `div` n2
-        let stack_f = (show answer) : stack3
-        return ((show pc2) : stack_f)
-        
-    -- i_mod
-    | (toChar IMod) == (opcode instr) = do
-        let n1 = read (head stack) :: Int
-        let stack2 = tail stack
-        let n2 = read (head stack2) :: Int
-        let stack3 = tail stack2
-        let answer = n1 `rem` n2
-        let stack_f = (show answer) : stack3
-        return ((show pc2) : stack_f)
+    -- i_math
+    | (isMath instr) == True = (decodeMath instr stack pc)
     
     -- i_print
     | (toChar IPrint) == (opcode instr) = do
