@@ -27,6 +27,6 @@ executable qkvm
   main-is:             Vm.hs
   -- other-modules:       Opcode.hs
   -- other-extensions:    
-  build-depends:       base >=4.9 && <4.10, binary, bytestring, utf8-string
+  build-depends:       base >=4.9 && <4.10, binary, bytestring, utf8-string, containers
   hs-source-dirs:      src
   default-language:    Haskell2010

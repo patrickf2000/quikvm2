@@ -10,6 +10,8 @@ import qualified Data.ByteString.UTF8 as BSU
 import qualified Data.Binary.Get as B
 import Data.Int
 import Data.Binary as B
+import qualified Data.Sequence as List
+import Data.Foldable (toList)
 
 import Opcode
 import Common
@@ -77,6 +79,28 @@ decoder instr rdata
     | (toChar ILoad) == (opcode instr) = do
         let i = iArg instr
         let s2 = (show i) : stack
+        return (buildRData s2 vars (pc+1))
+        
+    -- i_var
+    | (toChar IVar) == (opcode instr) = do
+        let i = iArg instr
+        let v2 = (show i) : vars
+        return (buildRData stack v2 (pc+1))
+    
+    -- i_store
+    | (toChar IStore) == (opcode instr) = do
+        let i = fromEnum (iArg instr)
+        let no = head stack
+        let s2 = tail stack
+        let updateVars = List.update i no $ List.fromList vars
+        let vars2 = toList updateVars :: [String]
+        return (buildRData s2 vars2 (pc+1))
+    
+    -- i_load_var
+    | (toChar ILoadVar) == (opcode instr) = do
+        let i = fromEnum (iArg instr)
+        let no = vars !! i
+        let s2 = no : stack
         return (buildRData s2 vars (pc+1))
     
     -- i_math
